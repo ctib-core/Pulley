@@ -72,6 +72,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
 
     // ============ Message Types ============
     uint16 public constant DEPOSIT_REQUEST = 2;
+    uint16 public constant WITHDRAW_REQUEST = 3;
     uint16 public constant STATE_RESPONSE = 4;
     uint16 public constant FILL_ORDER = 5;
     uint16 public constant FILL_ORDER_ARGS = 6;
@@ -176,7 +177,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         address _owner
     ) OApp(_endpoint, _owner) Ownable(_owner) {
         // Initialize with minimum gas balance
-        minimumGasBalance = 0.000000000001 ether;
+        minimumGasBalance = 0.01 ether;
     }
 
     // ============ Fund Management Functions ============
@@ -272,6 +273,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         uint32 dstEid,
         address asset,
         uint256 amount,
+        uint16 msgtype,
         bytes calldata options
     ) external payable isAuthorized(this.deployToNestVault.selector) {
         if (amount == 0) revert CrossChainController__ZeroAmount();
@@ -279,12 +281,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             revert CrossChainController__InsufficientFunds();
 
         // Generate unique request ID
-        bytes32 requestId = _generateRequestId(
-            dstEid,
-            DEPOSIT_REQUEST,
-            asset,
-            amount
-        );
+        bytes32 requestId = _generateRequestId(dstEid, msgtype, asset, amount);
 
         // Create deposit request structure (matching Strategy contract)
         bytes memory depositRequest = abi.encode(
@@ -297,13 +294,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             requestId // requestId
         );
 
-        bytes memory message = abi.encode(DEPOSIT_REQUEST, depositRequest);
+        bytes memory message = abi.encode(msgtype, depositRequest);
 
         // Store pending request
         pendingRequests[requestId] = CrossChainRequest({
             requestId: requestId,
             dstEid: dstEid,
-            msgType: DEPOSIT_REQUEST,
+            msgType: msgtype,
             asset: asset,
             amount: amount,
             timestamp: block.timestamp,
