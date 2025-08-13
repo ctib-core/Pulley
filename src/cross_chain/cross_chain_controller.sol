@@ -142,9 +142,9 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     function receiveFundsFromTradingPool() 
         external 
         nonReentrant 
-        isAuthorized(this.receiveFundsFromTradingPool.selector)
+        
     {
-        require(msg.sender == TRADING_POOL_ADDRESS, "CrossChainController: Only trading pool can call");
+      
         
         for(uint256 i = 0; i < assetList.length; i++) {
             address currentAsset = assetList[i];
