@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {IPermissionManager} from "./permission/IpermissionManager.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title PermissionManager
@@ -10,13 +11,30 @@ import {IPermissionManager} from "./permission/IpermissionManager.sol";
  * This means that only addresses with the correct function selector can execute certain functions.
  * @author 0xodeili Lee
  */
-contract PermissionManager is IPermissionManager {
+contract PermissionManager is Ownable {
     // Events
-    event PermissionGranted(address _account, bytes4 _functionSelector, bool _isActive, uint40 _time);
-    event PermissionRevoked(address _account, bytes4 _functionSelector, bool _isActive, uint40 _timestamp);
+    event PermissionGranted(
+        address _account,
+        bytes4 _functionSelector,
+        bool _isActive,
+        uint40 _time
+    );
+    event PermissionRevoked(
+        address _account,
+        bytes4 _functionSelector,
+        bool _isActive,
+        uint40 _timestamp
+    );
+    struct Permission {
+        address account;
+        bytes4 functionSelector;
+        bool isActive;
+        uint40 grantedAt;
+    }
 
     // Variables
-    address public override owner;
+
+    constructor() Ownable(msg.sender) {}
 
     // Mappings
     mapping(address => mapping(bytes4 => Permission)) private _permissions;
@@ -25,26 +43,27 @@ contract PermissionManager is IPermissionManager {
 
     // Modifiers
     modifier validAccount(address _account) {
-        require(_account != address(0), "PermissionManager: Cannot be zero address");
+        require(
+            _account != address(0),
+            "PermissionManager: Cannot be zero address"
+        );
         _;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "PermissionManager: not authorized");
-        _;
-    }
+    //  modifier onlyOwner() {
+    //      require(msg.sender == owner, "PermissionManager: not authorized");
+    //      _;
+    //  }
 
     /**
      * @dev Calls the internal permission grant logic to give permission
      * @notice _account the account to receive the permission
      * @notice the function selector to grant permission for
      */
-    function grantPermission(address _account, bytes4 _functionSelector)
-        external
-        override
-        onlyOwner
-        validAccount(_account)
-    {
+    function grantPermission(
+        address _account,
+        bytes4 _functionSelector
+    ) external onlyOwner validAccount(_account) {
         _grantPermission(_account, _functionSelector);
     }
 
@@ -53,12 +72,10 @@ contract PermissionManager is IPermissionManager {
      * @notice _account the account to receive the permission
      * @notice the function selectors to grant permission for
      */
-    function grantBatchPermission(address _account, bytes4[] calldata _functionSelector)
-        external
-        override
-        onlyOwner
-        validAccount(_account)
-    {
+    function grantBatchPermission(
+        address _account,
+        bytes4[] calldata _functionSelector
+    ) external onlyOwner validAccount(_account) {
         for (uint256 i = 0; i < _functionSelector.length; i++) {
             _grantPermission(_account, _functionSelector[i]);
         }
@@ -69,12 +86,10 @@ contract PermissionManager is IPermissionManager {
      * @notice _account the account to revoke the permission
      * @notice the function selector to revoke permission for
      */
-    function revokePermision(address _account, bytes4 _functionSelector)
-        external
-        override
-        onlyOwner
-        validAccount(_account)
-    {
+    function revokePermision(
+        address _account,
+        bytes4 _functionSelector
+    ) external onlyOwner validAccount(_account) {
         _revokePermission(_account, _functionSelector);
     }
 
@@ -83,12 +98,10 @@ contract PermissionManager is IPermissionManager {
      * @notice _account the account to revoke the permission
      * @notice the function selectors to revoke permission for
      */
-    function batchRevokePermission(address _account, bytes4[] calldata _functionSelector)
-        external
-        override
-        onlyOwner
-        validAccount(_account)
-    {
+    function batchRevokePermission(
+        address _account,
+        bytes4[] calldata _functionSelector
+    ) external onlyOwner validAccount(_account) {
         for (uint256 i = 0; i < _functionSelector.length; i++) {
             _revokePermission(_account, _functionSelector[i]);
         }
@@ -99,8 +112,13 @@ contract PermissionManager is IPermissionManager {
      * @notice _account the account to receive the permission
      * @notice the function selector to grant permission for
      */
-    function _grantPermission(address _account, bytes4 functionSelector) internal {
-        Permission storage permission = _permissions[_account][functionSelector];
+    function _grantPermission(
+        address _account,
+        bytes4 functionSelector
+    ) internal {
+        Permission storage permission = _permissions[_account][
+            functionSelector
+        ];
 
         if (!permission.isActive) {
             _accountFunctionSelectors[_account].push(functionSelector);
@@ -112,7 +130,12 @@ contract PermissionManager is IPermissionManager {
         permission.isActive = true;
         permission.grantedAt = uint40(block.timestamp);
 
-        emit PermissionGranted(_account, functionSelector, true, uint40(block.timestamp));
+        emit PermissionGranted(
+            _account,
+            functionSelector,
+            true,
+            uint40(block.timestamp)
+        );
     }
 
     /**
@@ -120,31 +143,46 @@ contract PermissionManager is IPermissionManager {
      * @notice _account the account to revoke the permission
      * @notice the function selector to revoke permission for
      */
-    function _revokePermission(address _account, bytes4 _functionSelector) internal {
-        Permission storage permission = _permissions[_account][_functionSelector];
+    function _revokePermission(
+        address _account,
+        bytes4 _functionSelector
+    ) internal {
+        Permission storage permission = _permissions[_account][
+            _functionSelector
+        ];
 
         if (permission.isActive) {
             permission.isActive = false;
         }
 
-        emit PermissionRevoked(_account, _functionSelector, false, uint40(block.timestamp));
+        emit PermissionRevoked(
+            _account,
+            _functionSelector,
+            false,
+            uint40(block.timestamp)
+        );
     }
 
-    function hasPermissions(address _account, bytes4 _functionSelector) public view override returns (bool) {
-        Permission storage permission = _permissions[_account][_functionSelector];
+    function hasPermissions(
+        address _account,
+        bytes4 _functionSelector
+    ) public view returns (bool) {
+        Permission storage permission = _permissions[_account][
+            _functionSelector
+        ];
         return permission.isActive;
     }
 
-    function setNewPermissionManager(address _newowner) public onlyOwner validAccount(_newowner) {
-        owner = _newowner;
+    function setNewPermissionManager(
+        address _newowner
+    ) public onlyOwner validAccount(_newowner) {
+        transferOwnership(_newowner);
     }
 
     // Getters
-    function getAccountFunctionSelectors(address _account) public view returns (bytes4[] memory) {
+    function getAccountFunctionSelectors(
+        address _account
+    ) public view returns (bytes4[] memory) {
         return _accountFunctionSelectors[_account];
-    }
-
-    constructor() {
-        owner = msg.sender;
     }
 }

@@ -17,26 +17,27 @@ contract DeployScript is Script {
     CrossChainController controller;
     address[] allowedAssetsList;
     address baseEndpoint;
-    address owner = address(0x11);
+    //  address owner = address(0x11);
     TradingPool tradingPool;
     address[] supportedAssets;
     Gateway gateway;
 
-    address public deployer; 
+    address public deployer;
 
-    address public INTERGRATIONWALLET = 0xf0830060f836B8d54bF02049E5905F619487989e;
-    address public STRATEGY = 0xf0830060f836B8d54bF02049E5905F619487989e ;
-    address public LIMIT_ORDER = 0xf0830060f836B8d54bF02049E5905F619487989e ;
+    address public INTERGRATIONWALLET =
+        0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public STRATEGY = 0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public LIMIT_ORDER = 0xf0830060f836B8d54bF02049E5905F619487989e;
 
-    address public usdc =  0xf0830060f836B8d54bF02049E5905F619487989e ;
-    address public coreToken = 0xf0830060f836B8d54bF02049E5905F619487989e ;
-    address public ethereum =  0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public usdc = 0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public coreToken = 0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public ethereum = 0xf0830060f836B8d54bF02049E5905F619487989e;
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.addr(deployerPrivateKey);
 
-        vm.createSelectFork(vm.rpcUrl("ethereum"));
+        vm.createSelectFork(vm.rpcUrl("coredao"));
         vm.startBroadcast(deployerPrivateKey);
 
         console.log("Deploying contracts to ETH network...");
@@ -45,7 +46,7 @@ contract DeployScript is Script {
         deploy();
         grantPermission(deployer);
         setConfig();
-        grantPermission(deployer); 
+        grantPermission(deployer);
         logAddress();
 
         vm.stopBroadcast();
@@ -53,11 +54,29 @@ contract DeployScript is Script {
 
     function deploy() internal {
         permissionManager = new PermissionManager();
-        controller = new CrossChainController(baseEndpoint, owner);
-        pToken = new PulleyToken("PulleyToken", "PK", address(permissionManager));
-        pulley = new PulleyTokenEngine(address(pToken), allowedAssetsList, address(permissionManager));
-        tradingPool = new TradingPool(address(pulley), supportedAssets, address(permissionManager));
-        gateway = new Gateway(address(pToken), address(pulley), address(tradingPool), address(controller), address(permissionManager));
+        controller = new CrossChainController(baseEndpoint, deployer);
+        pToken = new PulleyToken(
+            "PulleyToken",
+            "PK",
+            address(permissionManager)
+        );
+        pulley = new PulleyTokenEngine(
+            address(pToken),
+            allowedAssetsList,
+            address(permissionManager)
+        );
+        tradingPool = new TradingPool(
+            address(pulley),
+            supportedAssets,
+            address(permissionManager)
+        );
+        gateway = new Gateway(
+            address(pToken),
+            address(pulley),
+            address(tradingPool),
+            address(controller),
+            address(permissionManager)
+        );
     }
 
     function setConfig() internal {
@@ -65,8 +84,14 @@ contract DeployScript is Script {
         pToken.setPulleyTokenEngine(address(pulley));
         tradingPool.setCrossChainController(address(controller));
         controller.setProfitThreshold(1);
-        controller.setContractAddress(STRATEGY, LIMIT_ORDER, address(permissionManager), address(pToken), address(tradingPool));
-        setAsset();   
+        controller.setContractAddress(
+            STRATEGY,
+            LIMIT_ORDER,
+            address(permissionManager),
+            address(pToken),
+            address(tradingPool)
+        );
+        setAsset();
     }
 
     function setAsset() internal {
@@ -92,16 +117,28 @@ contract DeployScript is Script {
         permissions[10] = pulley.setAssetAllowed.selector;
         permissions[11] = controller.setProfitThreshold.selector;
 
-        IPermissionManager(address(permissionManager)).grantBatchPermission(_account, permissions);
-        IPermissionManager(address(permissionManager)).grantBatchPermission(INTERGRATIONWALLET, permissions);
+        IPermissionManager(address(permissionManager)).grantBatchPermission(
+            _account,
+            permissions
+        );
+        IPermissionManager(address(permissionManager)).grantBatchPermission(
+            INTERGRATIONWALLET,
+            permissions
+        );
     }
 
     function logAddress() internal {
         console.log("PULLEY TOKEN WAS DEPLOYED AT ADDRESS", address(pToken));
         console.log("PULLEY ENGINE WAS DEPLOYED AT ADDRESS", address(pulley));
-        console.log("PERMISSION WAS DEPLOYED AT ADDRESS", address(permissionManager));
+        console.log(
+            "PERMISSION WAS DEPLOYED AT ADDRESS",
+            address(permissionManager)
+        );
         console.log("TRADING WAS DEPLOYED AT ADDRESS", address(tradingPool));
         console.log("GATEWAY WAS DEPLOYED AT ADDRESS", address(gateway));
-        console.log("CROSS-CHAIN  WAS DEPLOYED AT ADDRESS", address(controller));
+        console.log(
+            "CROSS-CHAIN  WAS DEPLOYED AT ADDRESS",
+            address(controller)
+        );
     }
 }

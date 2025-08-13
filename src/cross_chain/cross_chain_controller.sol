@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.22;
 
-import { OApp, Origin, MessagingFee } from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
-import { OAppOptionsType3 } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {OApp, Origin, MessagingFee} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
+import {OAppOptionsType3} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import{ PermissionModifiers} from "../Permission/PermissionModifier.sol";
-import{ IPulleyTokenEngine} from "../interfaces/IPulleyTokenEngine.sol";
-import{IPermissionManager} from "../Permission/interface/IPermissionManager.sol";
+import {PermissionModifiers} from "../Permission/PermissionModifier.sol";
+import {IPulleyTokenEngine} from "../interfaces/IPulleyTokenEngine.sol";
+import {IPermissionManager} from "../Permission/interface/IPermissionManager.sol";
 
 /// @title CrossChainController - Manages cross-chain fund allocation and operations
 /// @notice Controls fund distribution: 10% insurance, 45% Nest vault, 45% limit orders
@@ -30,7 +30,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     uint256 public constant NEST_VAULT_PERCENTAGE = 45; // 45%
     uint256 public constant LIMIT_ORDER_PERCENTAGE = 45; // 45%
     uint256 public constant PERCENTAGE_BASE = 100;
-    
+
     // Profit distribution constants
     uint256 public constant INSURANCE_PROFIT_SHARE = 1; // 1%
     uint256 public constant TRADER_PROFIT_SHARE = 99; // 99%
@@ -40,8 +40,14 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     uint256 public minimumGasBalance = 0.01 ether; // Minimum gas for operations
 
     /// @notice Modifier for permissioned actions
-    modifier isAuthorized(bytes4 _functionSelector){
-        require(IPermissionManager(IPERMISSION).hasPermissions(msg.sender, _functionSelector), "CrossChainController: not authorized");
+    modifier isAuthorized(bytes4 _functionSelector) {
+        require(
+            IPermissionManager(IPERMISSION).hasPermissions(
+                msg.sender,
+                _functionSelector
+            ),
+            "CrossChainController: not authorized"
+        );
         _;
     }
 
@@ -110,13 +116,46 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     }
 
     // ============ Events ============
-    event FundsReceived(address indexed asset, uint256 amount, address indexed from);
-    event FundsAllocated(address indexed asset, uint256 insurance, uint256 nestVault, uint256 limitOrder);
-    event CrossChainRequestSent(bytes32 indexed requestId, uint32 dstEid, uint16 msgType, address asset, uint256 amount);
-    event StateResponseReceived(bytes32 indexed requestId, bool success, uint256 resultAmount, string errorMessage);
-    event ProfitRecorded(address indexed asset, int256 profitLoss, uint256 insuranceShare, uint256 traderShare);
-    event InsuranceUpdated(address indexed asset, uint256 amount, bool isIncrease);
-    event ThresholdReached(address indexed asset, uint256 currentProfit, uint256 threshold);
+    event FundsReceived(
+        address indexed asset,
+        uint256 amount,
+        address indexed from
+    );
+    event FundsAllocated(
+        address indexed asset,
+        uint256 insurance,
+        uint256 nestVault,
+        uint256 limitOrder
+    );
+    event CrossChainRequestSent(
+        bytes32 indexed requestId,
+        uint32 dstEid,
+        uint16 msgType,
+        address asset,
+        uint256 amount
+    );
+    event StateResponseReceived(
+        bytes32 indexed requestId,
+        bool success,
+        uint256 resultAmount,
+        string errorMessage
+    );
+    event ProfitRecorded(
+        address indexed asset,
+        int256 profitLoss,
+        uint256 insuranceShare,
+        uint256 traderShare
+    );
+    event InsuranceUpdated(
+        address indexed asset,
+        uint256 amount,
+        bool isIncrease
+    );
+    event ThresholdReached(
+        address indexed asset,
+        uint256 currentProfit,
+        uint256 threshold
+    );
     event AssetSupportUpdated(address indexed asset, bool supported);
 
     // ============ Errors ============
@@ -132,30 +171,31 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @notice Initialize with Endpoint V2 and owner address
     /// @param _endpoint The local chain's LayerZero Endpoint V2 address
     /// @param _owner    The address permitted to configure this OApp
-    constructor(address _endpoint, address _owner) OApp(_endpoint, _owner) Ownable(_owner) {
+    constructor(
+        address _endpoint,
+        address _owner
+    ) OApp(_endpoint, _owner) Ownable(_owner) {
         // Initialize with minimum gas balance
-        minimumGasBalance = 0.01 ether;
+        minimumGasBalance = 0.000000000001 ether;
     }
 
     // ============ Fund Management Functions ============
 
-    function receiveFundsFromTradingPool() 
-        external 
-        nonReentrant 
-        
-    {
-      
-        
-        for(uint256 i = 0; i < assetList.length; i++) {
+    function receiveFundsFromTradingPool() external nonReentrant {
+        for (uint256 i = 0; i < assetList.length; i++) {
             address currentAsset = assetList[i];
             uint256 _amount = IERC20(currentAsset).balanceOf(address(this));
-            
+
             if (_amount == 0) continue; // Skip if no balance
-            if (!supportedAssets[currentAsset]) revert CrossChainController__UnsupportedAsset();
+            if (!supportedAssets[currentAsset])
+                revert CrossChainController__UnsupportedAsset();
 
             // Allocate funds according to percentages
-            FundAllocation memory allocation = _calculateAllocation(currentAsset, _amount);
-            
+            FundAllocation memory allocation = _calculateAllocation(
+                currentAsset,
+                _amount
+            );
+
             // Update allocations
             insuranceAllocations[currentAsset] += allocation.insuranceAmount;
             nestVaultAllocations[currentAsset] += allocation.nestVaultAmount;
@@ -168,7 +208,12 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             }
 
             emit FundsReceived(currentAsset, _amount, msg.sender);
-            emit FundsAllocated(currentAsset, allocation.insuranceAmount, allocation.nestVaultAmount, allocation.limitOrderAmount);
+            emit FundsAllocated(
+                currentAsset,
+                allocation.insuranceAmount,
+                allocation.nestVaultAmount,
+                allocation.limitOrderAmount
+            );
         }
     }
 
@@ -176,21 +221,28 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @param asset The asset to allocate
     /// @param totalAmount Total amount to allocate
     /// @return allocation FundAllocation struct with calculated amounts
-    function _calculateAllocation(address asset, uint256 totalAmount) 
-        internal 
-        pure 
-        returns (FundAllocation memory allocation) 
-    {
+    function _calculateAllocation(
+        address asset,
+        uint256 totalAmount
+    ) internal pure returns (FundAllocation memory allocation) {
         allocation.asset = asset;
         allocation.totalAmount = totalAmount;
-        
+
         // Calculate allocations
-        allocation.insuranceAmount = (totalAmount * INSURANCE_PERCENTAGE) / PERCENTAGE_BASE;
-        allocation.nestVaultAmount = (totalAmount * NEST_VAULT_PERCENTAGE) / PERCENTAGE_BASE;
-        allocation.limitOrderAmount = (totalAmount * LIMIT_ORDER_PERCENTAGE) / PERCENTAGE_BASE;
-        
+        allocation.insuranceAmount =
+            (totalAmount * INSURANCE_PERCENTAGE) /
+            PERCENTAGE_BASE;
+        allocation.nestVaultAmount =
+            (totalAmount * NEST_VAULT_PERCENTAGE) /
+            PERCENTAGE_BASE;
+        allocation.limitOrderAmount =
+            (totalAmount * LIMIT_ORDER_PERCENTAGE) /
+            PERCENTAGE_BASE;
+
         // Handle rounding errors - add remainder to Nest vault
-        uint256 allocated = allocation.insuranceAmount + allocation.nestVaultAmount + allocation.limitOrderAmount;
+        uint256 allocated = allocation.insuranceAmount +
+            allocation.nestVaultAmount +
+            allocation.limitOrderAmount;
         if (allocated < totalAmount) {
             allocation.nestVaultAmount += (totalAmount - allocated);
         }
@@ -200,10 +252,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @param asset The asset to send
     /// @param amount The amount to send
     function _sendToInsurance(address asset, uint256 amount) internal {
-         require(amount > 0, "Cross_chain_controller: cannot perform zero mint");
-         IERC20(asset).approve(PULLEY_TOKEN_ENGINE_ADDRESS, amount);
-         IPulleyTokenEngine( PULLEY_TOKEN_ENGINE_ADDRESS).insuranceBackingMinter(asset,amount);
-         emit InsuranceUpdated(asset, amount, true);
+        require(amount > 0, "Cross_chain_controller: cannot perform zero mint");
+        IERC20(asset).approve(PULLEY_TOKEN_ENGINE_ADDRESS, amount);
+        IPulleyTokenEngine(PULLEY_TOKEN_ENGINE_ADDRESS).insuranceBackingMinter(
+            asset,
+            amount
+        );
+        emit InsuranceUpdated(asset, amount, true);
     }
 
     // ============ Cross-Chain Operations ============
@@ -220,24 +275,30 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         bytes calldata options
     ) external payable isAuthorized(this.deployToNestVault.selector) {
         if (amount == 0) revert CrossChainController__ZeroAmount();
-        if (amount > nestVaultAllocations[asset]) revert CrossChainController__InsufficientFunds();
+        if (amount > nestVaultAllocations[asset])
+            revert CrossChainController__InsufficientFunds();
 
         // Generate unique request ID
-        bytes32 requestId = _generateRequestId(dstEid, DEPOSIT_REQUEST, asset, amount);
-        
+        bytes32 requestId = _generateRequestId(
+            dstEid,
+            DEPOSIT_REQUEST,
+            asset,
+            amount
+        );
+
         // Create deposit request structure (matching Strategy contract)
         bytes memory depositRequest = abi.encode(
-            asset,           // depositAsset
-            amount,          // depositAmount  
-            amount * 95 / 100, // minimumMint (95% of amount as safety)
-            false,           // iswithpermit
-            "",              // permitData (empty)
-            address(this),   // requester
-            requestId        // requestId
+            asset, // depositAsset
+            amount, // depositAmount
+            (amount * 95) / 100, // minimumMint (95% of amount as safety)
+            false, // iswithpermit
+            "", // permitData (empty)
+            address(this), // requester
+            requestId // requestId
         );
 
         bytes memory message = abi.encode(DEPOSIT_REQUEST, depositRequest);
-        
+
         // Store pending request
         pendingRequests[requestId] = CrossChainRequest({
             requestId: requestId,
@@ -261,7 +322,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             payable(msg.sender)
         );
 
-        emit CrossChainRequestSent(requestId, dstEid, DEPOSIT_REQUEST, asset, amount);
+        emit CrossChainRequestSent(
+            requestId,
+            dstEid,
+            DEPOSIT_REQUEST,
+            asset,
+            amount
+        );
     }
 
     /// @notice Execute limit order on another chain
@@ -277,18 +344,18 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     ) external payable isAuthorized(this.executeLimitOrder.selector) {
         // Validate message type
         require(
-            msgType == FILL_ORDER || 
-            msgType == FILL_ORDER_ARGS || 
-            msgType == FILL_CONTRACT_ORDER || 
-            msgType == CANCEL_ORDERS,
+            msgType == FILL_ORDER ||
+                msgType == FILL_ORDER_ARGS ||
+                msgType == FILL_CONTRACT_ORDER ||
+                msgType == CANCEL_ORDERS,
             "CrossChainController: Invalid order message type"
         );
 
         // Generate unique request ID
         bytes32 requestId = _generateRequestId(dstEid, msgType, address(0), 0);
-        
+
         bytes memory message = abi.encode(msgType, orderData);
-        
+
         // Store pending request
         pendingRequests[requestId] = CrossChainRequest({
             requestId: requestId,
@@ -320,12 +387,17 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         uint32 dstEid,
         uint8 contractType,
         bytes calldata options
-    ) external payable  {
-        bytes32 requestId = _generateRequestId(dstEid, PROFIT_CHECK_REQUEST, address(0), contractType);
-        
+    ) external payable {
+        bytes32 requestId = _generateRequestId(
+            dstEid,
+            PROFIT_CHECK_REQUEST,
+            address(0),
+            contractType
+        );
+
         bytes memory profitRequest = abi.encode(contractType, block.timestamp);
         bytes memory message = abi.encode(PROFIT_CHECK_REQUEST, profitRequest);
-        
+
         // Store pending request
         pendingRequests[requestId] = CrossChainRequest({
             requestId: requestId,
@@ -346,7 +418,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             payable(msg.sender)
         );
 
-        emit CrossChainRequestSent(requestId, dstEid, PROFIT_CHECK_REQUEST, address(0), contractType);
+        emit CrossChainRequestSent(
+            requestId,
+            dstEid,
+            PROFIT_CHECK_REQUEST,
+            address(0),
+            contractType
+        );
     }
 
     /// @notice Generate unique request ID
@@ -361,15 +439,17 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         address asset,
         uint256 amount
     ) internal returns (bytes32 requestId) {
-        requestId = keccak256(abi.encode(
-            address(this),
-            dstEid,
-            msgType,
-            asset,
-            amount,
-            requestNonce++,
-            block.timestamp
-        ));
+        requestId = keccak256(
+            abi.encode(
+                address(this),
+                dstEid,
+                msgType,
+                asset,
+                amount,
+                requestNonce++,
+                block.timestamp
+            )
+        );
     }
 
     // ============ LayerZero Message Handling ============
@@ -385,7 +465,10 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         bytes calldata /*_extraData*/
     ) internal override {
         // Decode message type and data
-        (uint16 msgType, bytes memory data) = abi.decode(_message, (uint16, bytes));
+        (uint16 msgType, bytes memory data) = abi.decode(
+            _message,
+            (uint16, bytes)
+        );
 
         if (msgType == STATE_RESPONSE) {
             // Handle state response from cross-chain operations
@@ -398,9 +481,12 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @notice Handle state response from cross-chain operations
     /// @param _origin Origin metadata from LayerZero
     /// @param _data Encoded StateResponse data
-    function _handleStateResponse(Origin calldata _origin, bytes memory _data) internal {
+    function _handleStateResponse(
+        Origin calldata _origin,
+        bytes memory _data
+    ) internal {
         StateResponse memory response = abi.decode(_data, (StateResponse));
-        
+
         // Prevent replay attacks
         if (processedRequests[response.requestId]) {
             revert CrossChainController__RequestAlreadyProcessed();
@@ -409,8 +495,11 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
 
         // Get the original request
         CrossChainRequest storage request = pendingRequests[response.requestId];
-        require(request.dstEid == _origin.srcEid, "CrossChainController: Invalid response origin");
-        
+        require(
+            request.dstEid == _origin.srcEid,
+            "CrossChainController: Invalid response origin"
+        );
+
         // Mark request as processed
         request.processed = true;
 
@@ -418,8 +507,8 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         if (request.msgType == DEPOSIT_REQUEST) {
             _handleNestVaultResponse(request, response);
         } else if (
-            request.msgType == FILL_ORDER || 
-            request.msgType == FILL_ORDER_ARGS || 
+            request.msgType == FILL_ORDER ||
+            request.msgType == FILL_ORDER_ARGS ||
             request.msgType == FILL_CONTRACT_ORDER
         ) {
             _handleLimitOrderResponse(request, response);
@@ -428,9 +517,18 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         }
 
         // Report profit/loss back to trading pool
-        _reportToTradingPool(response.resultAmount > 0 ? int256(response.resultAmount) : -int256(response.resultAmount));
+        _reportToTradingPool(
+            response.resultAmount > 0
+                ? int256(response.resultAmount)
+                : -int256(response.resultAmount)
+        );
 
-        emit StateResponseReceived(response.requestId, response.success, response.resultAmount, response.errorMessage);
+        emit StateResponseReceived(
+            response.requestId,
+            response.success,
+            response.resultAmount,
+            response.errorMessage
+        );
     }
 
     /// @notice Handle Nest vault operation response
@@ -443,9 +541,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         if (response.success) {
             // Update profit tracking for successful deposit
             nestVaultProfits[request.asset] += response.resultAmount;
-            
+
             // Check if profit threshold is reached
-            _checkProfitThreshold(request.asset, nestVaultProfits[request.asset], 1);
+            _checkProfitThreshold(
+                request.asset,
+                nestVaultProfits[request.asset],
+                1
+            );
         } else {
             // Handle failed deposit - restore allocation
             nestVaultAllocations[request.asset] += request.amount;
@@ -463,7 +565,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
             // For limit orders, resultAmount represents profit/loss
             // Positive means profit, handle accordingly
             limitOrderProfits[address(0)] += response.resultAmount; // Use zero address for general tracking
-            
+
             // Check if profit threshold is reached
             _checkProfitThreshold(address(0), limitOrderProfits[address(0)], 2);
         }
@@ -478,11 +580,11 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         StateResponse memory response
     ) internal {
         uint8 contractType = uint8(request.amount); // contractType was stored in amount field
-        
+
         if (response.success) {
             // Response.resultAmount contains current profit/loss
             int256 profitLoss = int256(response.resultAmount);
-            
+
             if (contractType == 1) {
                 // Nest vault profit
                 _processProfitDistribution(address(0), profitLoss, 1);
@@ -499,13 +601,21 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @param asset Asset address (zero address for general tracking)
     /// @param currentProfit Current profit amount
     /// @param contractType 1 for Nest vault, 2 for limit orders
-    function _checkProfitThreshold(address asset, uint256 currentProfit, uint8 contractType) internal {
+    function _checkProfitThreshold(
+        address asset,
+        uint256 currentProfit,
+        uint8 contractType
+    ) internal {
         if (currentProfit >= profitThreshold) {
             emit ThresholdReached(asset, currentProfit, profitThreshold);
-            
+
             // Trigger profit distribution
-            _processProfitDistribution(asset, int256(currentProfit), contractType);
-            
+            _processProfitDistribution(
+                asset,
+                int256(currentProfit),
+                contractType
+            );
+
             // Reset profit counter after distribution
             if (contractType == 1) {
                 nestVaultProfits[asset] = 0;
@@ -519,13 +629,18 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @param asset Asset involved in profit (zero address for general)
     /// @param profitLoss Profit or loss amount (negative for loss)
     /// @param contractType 1 for Nest vault, 2 for limit orders
-    function _processProfitDistribution(address asset, int256 profitLoss, uint8 contractType) internal {
+    function _processProfitDistribution(
+        address asset,
+        int256 profitLoss,
+        uint8 contractType
+    ) internal {
         if (profitLoss > 0) {
             // Profit case: 1% to insurance, 99% to traders
             uint256 profit = uint256(profitLoss);
-            uint256 insuranceShare = (profit * INSURANCE_PROFIT_SHARE) / PERCENTAGE_BASE;
+            uint256 insuranceShare = (profit * INSURANCE_PROFIT_SHARE) /
+                PERCENTAGE_BASE;
             uint256 traderShare = profit - insuranceShare;
-            
+
             // Send insurance share to Pulley StableCoin
             if (insuranceShare > 0 && PULLEY_STABLECOIN_ADDRESS != address(0)) {
                 // For cross-chain profits, we need to handle this differently
@@ -533,17 +648,21 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
                 insuranceAllocations[asset] += insuranceShare;
                 emit InsuranceUpdated(asset, insuranceShare, true);
             }
-            
+
             // Send trader share back to trading pool
             if (traderShare > 0 && TRADING_POOL_ADDRESS != address(0)) {
                 // Track trader rewards - in practice this would trigger distribution
-                emit ProfitRecorded(asset, profitLoss, insuranceShare, traderShare);
+                emit ProfitRecorded(
+                    asset,
+                    profitLoss,
+                    insuranceShare,
+                    traderShare
+                );
             }
-            
         } else if (profitLoss < 0) {
             // Loss case: Use insurance to cover if available
             uint256 loss = uint256(-profitLoss);
-            
+
             if (insuranceAllocations[asset] >= loss) {
                 // Insurance covers the full loss
                 insuranceAllocations[asset] -= loss;
@@ -553,11 +672,11 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
                 // Insurance partially covers or doesn't cover
                 uint256 coveredByInsurance = insuranceAllocations[asset];
                 insuranceAllocations[asset] = 0;
-                
+
                 if (coveredByInsurance > 0) {
                     emit InsuranceUpdated(asset, coveredByInsurance, false);
                 }
-                
+
                 emit ProfitRecorded(asset, profitLoss, coveredByInsurance, 0);
             }
         }
@@ -573,13 +692,13 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     function _performAutomatedProfitCheck() internal {
         for (uint256 i = 0; i < assetList.length; i++) {
             address asset = assetList[i];
-            
+
             // Check Nest vault profits
             if (nestVaultProfits[asset] >= profitThreshold) {
                 _checkProfitThreshold(asset, nestVaultProfits[asset], 1);
             }
-            
-            // Check limit order profits  
+
+            // Check limit order profits
             if (limitOrderProfits[asset] >= profitThreshold) {
                 _checkProfitThreshold(asset, limitOrderProfits[asset], 2);
             }
@@ -602,10 +721,10 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     }
 
     /// @notice Add or remove supported asset
-    function setSupportedAsset(address asset, bool supported) 
-        external 
-        isAuthorized(this.setSupportedAsset.selector) 
-    {
+    function setSupportedAsset(
+        address asset,
+        bool supported
+    ) external isAuthorized(this.setSupportedAsset.selector) {
         if (supported && !supportedAssets[asset]) {
             supportedAssets[asset] = true;
             assetList.push(asset);
@@ -620,22 +739,21 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
                 }
             }
         }
-        
+
         emit AssetSupportUpdated(asset, supported);
     }
 
     /// @notice Update profit threshold
-    function setProfitThreshold(uint256 newThreshold) 
-        external 
-        isAuthorized(this.setProfitThreshold.selector) 
-    {
+    function setProfitThreshold(
+        uint256 newThreshold
+    ) external isAuthorized(this.setProfitThreshold.selector) {
         profitThreshold = newThreshold;
     }
 
     /// @notice Set contract addresses
     function setContractAddress(
-        address _strategyaddress, 
-        address limitOrder, 
+        address _strategyaddress,
+        address limitOrder,
         address permission,
         address pulleyStablecoin,
         address tradingPool
@@ -650,23 +768,31 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     // ============ View Functions ============
 
     /// @notice Get fund allocation for an asset
-    function getFundAllocation(address asset) 
-        external 
-        view 
-        returns (uint256 insurance, uint256 nestVault, uint256 limitOrder) 
+    function getFundAllocation(
+        address asset
+    )
+        external
+        view
+        returns (uint256 insurance, uint256 nestVault, uint256 limitOrder)
     {
         return (
             insuranceAllocations[asset],
-            nestVaultAllocations[asset], 
+            nestVaultAllocations[asset],
             limitOrderAllocations[asset]
         );
     }
 
     /// @notice Get profit data for an asset
-    function getProfitData(address asset) 
-        external 
-        view 
-        returns (uint256 nestProfit, uint256 limitProfit, uint256 totalInvestedAmount) 
+    function getProfitData(
+        address asset
+    )
+        external
+        view
+        returns (
+            uint256 nestProfit,
+            uint256 limitProfit,
+            uint256 totalInvestedAmount
+        )
     {
         return (
             nestVaultProfits[asset],
@@ -676,17 +802,22 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     }
 
     /// @notice Get supported assets list
-    function getSupportedAssets() external view returns (address[] memory assets) {
+    function getSupportedAssets()
+        external
+        view
+        returns (address[] memory assets)
+    {
         return assetList;
     }
 
     // ============ Utility Functions ============
 
     /// @notice Emergency withdraw function (admin only)
-    function emergencyWithdraw(address asset, uint256 amount, address to) 
-        external 
-        isAuthorized(this.emergencyWithdraw.selector) 
-    {
+    function emergencyWithdraw(
+        address asset,
+        uint256 amount,
+        address to
+    ) external isAuthorized(this.emergencyWithdraw.selector) {
         if (asset == address(0)) {
             payable(to).transfer(amount);
         } else {
@@ -698,17 +829,23 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     /// @param profitLoss Positive for profit, negative for loss
     function _reportToTradingPool(int256 profitLoss) internal {
         if (TRADING_POOL_ADDRESS == address(0)) return;
-        
+
         if (profitLoss > 0) {
             // Report profit to trading pool
-            (bool success,) = TRADING_POOL_ADDRESS.call(
-                abi.encodeWithSignature("recordTradingProfit(uint256)", uint256(profitLoss))
+            (bool success, ) = TRADING_POOL_ADDRESS.call(
+                abi.encodeWithSignature(
+                    "recordTradingProfit(uint256)",
+                    uint256(profitLoss)
+                )
             );
             require(success, "CrossChainController: Failed to report profit");
         } else if (profitLoss < 0) {
             // Report loss to trading pool
-            (bool success,) = TRADING_POOL_ADDRESS.call(
-                abi.encodeWithSignature("recordTradingLoss(uint256)", uint256(-profitLoss))
+            (bool success, ) = TRADING_POOL_ADDRESS.call(
+                abi.encodeWithSignature(
+                    "recordTradingLoss(uint256)",
+                    uint256(-profitLoss)
+                )
             );
             require(success, "CrossChainController: Failed to report loss");
         }
