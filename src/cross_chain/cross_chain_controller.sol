@@ -320,7 +320,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         uint32 dstEid,
         uint8 contractType,
         bytes calldata options
-    ) external payable isAuthorized(this.checkRemoteProfit.selector) {
+    ) external payable  {
         bytes32 requestId = _generateRequestId(dstEid, PROFIT_CHECK_REQUEST, address(0), contractType);
         
         bytes memory profitRequest = abi.encode(contractType, block.timestamp);

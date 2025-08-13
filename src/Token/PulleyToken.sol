@@ -224,4 +224,6 @@ contract PulleyToken is ERC20, ERC20Permit, ReentrancyGuard, IPulleyToken {
     {
         CROSS_CHAIN_CONTRACT = _crossChainContract;
     }
+
+    
 }
