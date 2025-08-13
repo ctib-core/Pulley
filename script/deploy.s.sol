@@ -24,7 +24,7 @@ contract DeployScript is Script {
 
   function setUp() {
     controller = new CrossChainController(baseEndpoint, owner);
-    pToken = new PulleyToken("PulleyToken", "PK");
+    pToken = new PulleyToken("PulleyToken", "PULL");
     pulley = new PulleyTokenEngine(address(ptoken), allowedAssetsList, address(permissionManager));
     tradingPool = new TradingPool(address(pulley), supportedAssets, address(permissionManager));
     gateway = new Gateway(address(pToken), address(pulley), address(tradingPool), address(controller), address(permissionManager));
