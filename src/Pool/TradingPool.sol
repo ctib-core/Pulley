@@ -22,6 +22,7 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
 
     IPulleyTokenEngine public pulleyTokenEngine;
     address public permissionManager;
+    address public crossChainController;
 
     // Pool metrics
     uint256 public totalPoolValue; // Total USD value of all assets in pool
@@ -411,8 +412,20 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
         external
         onlyPermitted(this.setCrossChainController.selector)
     {
-      CROSS_CHAIN_CONTROLLER = _crossChainController;
+        crossChainController = _crossChainController;
     }
 
-   
+    /**
+     * @notice Check for pending profit/loss from cross-chain operations
+     * @dev This should be called before major operations like withdrawals
+     */
+    function _checkPendingProfitLoss() internal {
+        // In a real implementation, this would call the cross-chain controller
+        // to get the latest profit/loss data from remote chains
+        if (crossChainController != address(0)) {
+            // Call cross-chain controller to check profit/loss status
+            // This is a placeholder - in reality you'd call a specific function
+            // that returns the latest profit/loss data
+        }
+    }
 }
