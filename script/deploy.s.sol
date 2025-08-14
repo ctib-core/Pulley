@@ -16,7 +16,7 @@ contract DeployScript is Script {
     PermissionManager permissionManager;
     CrossChainController controller;
     address[] allowedAssetsList;
-    address baseEndpoint;
+    address baseEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f; //eth endpoint 
     address owner = address(0x11);
     TradingPool tradingPool;
     address[] supportedAssets;
@@ -25,9 +25,12 @@ contract DeployScript is Script {
     address public deployer; 
 
     address public INTERGRATIONWALLET = 0xf0830060f836B8d54bF02049E5905F619487989e;
+
+    // address to add
     address public STRATEGY = 0xf0830060f836B8d54bF02049E5905F619487989e ;
     address public LIMIT_ORDER = 0xf0830060f836B8d54bF02049E5905F619487989e ;
 
+//token address 
     address public usdc =  0xf0830060f836B8d54bF02049E5905F619487989e ;
     address public coreToken = 0xf0830060f836B8d54bF02049E5905F619487989e ;
     address public ethereum =  0xf0830060f836B8d54bF02049E5905F619487989e;
@@ -36,10 +39,10 @@ contract DeployScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.addr(deployerPrivateKey);
 
-        vm.createSelectFork(vm.rpcUrl("ethereum"));
+        vm.createSelectFork(vm.rpcUrl("corechain"));
         vm.startBroadcast(deployerPrivateKey);
 
-        console.log("Deploying contracts to ETH network...");
+        console.log("Deploying contracts to Core network...");
         console.log("Deployer address:", deployer);
 
         deploy();
@@ -96,7 +99,7 @@ contract DeployScript is Script {
         IPermissionManager(address(permissionManager)).grantBatchPermission(INTERGRATIONWALLET, permissions);
     }
 
-    function logAddress() internal {
+    function logAddress() internal view {
         console.log("PULLEY TOKEN WAS DEPLOYED AT ADDRESS", address(pToken));
         console.log("PULLEY ENGINE WAS DEPLOYED AT ADDRESS", address(pulley));
         console.log("PERMISSION WAS DEPLOYED AT ADDRESS", address(permissionManager));

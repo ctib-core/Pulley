@@ -10,4 +10,9 @@ remappings = [
     "@layerzerolabs/lz-evm-messagelib-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib",
     "solidity-bytes-utils/=lib/solidity-bytes-utils/"
 ]
+
+
+corechain = "${CORECHAIN_URL}"
+
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
