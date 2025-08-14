@@ -177,7 +177,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         address _owner
     ) OApp(_endpoint, _owner) Ownable(_owner) {
         // Initialize with minimum gas balance
-        minimumGasBalance = 0.01 ether;
+        minimumGasBalance = 1;
     }
 
     // ============ Fund Management Functions ============
@@ -314,7 +314,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         _lzSend(
             dstEid,
             message,
-            combineOptions(dstEid, DEPOSIT_REQUEST, options),
+            combineOptions(dstEid, msgtype, options),
             MessagingFee(msg.value, 0),
             payable(msg.sender)
         );
@@ -322,7 +322,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
         emit CrossChainRequestSent(
             requestId,
             dstEid,
-            DEPOSIT_REQUEST,
+           msgtype,
             asset,
             amount
         );
