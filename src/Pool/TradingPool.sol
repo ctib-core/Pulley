@@ -403,7 +403,6 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
         return (totalTradingLosses, totalLossesCoveredByPulley, pulleyTokenProfitShare);
     }
 
- address public CROSS_CHAIN_CONTROLLER;
     /**
      * @notice Set cross-chain controller address
      * @param _crossChainController Address of the cross-chain controller

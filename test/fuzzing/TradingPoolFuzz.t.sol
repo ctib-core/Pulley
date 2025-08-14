@@ -219,7 +219,7 @@ contract TradingPoolFuzzTest is Test {
         uint256 initialPendingDistribution = tradingPool.getPendingProfitDistribution();
         
         // Distribute profits
-        (uint256 pulleyShare, uint256 poolShare) = tradingPool.distributeProfits();
+(uint256 pulleyShare, uint256 poolShare) = tradingPool.distributeProfits();
         
         // Check invariants
         assertEq(tradingPool.getPendingProfitDistribution(), 0, "Pending distribution should be zero after distribution");

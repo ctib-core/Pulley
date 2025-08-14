@@ -81,31 +81,31 @@ contract PermissionManager is Ownable {
         }
     }
 
-    /**
-     * @dev Function to revoke permission of an account
-     * @notice _account the account to revoke the permission
-     * @notice the function selector to revoke permission for
-     */
-    function revokePermision(
-        address _account,
-        bytes4 _functionSelector
-    ) external onlyOwner validAccount(_account) {
-        _revokePermission(_account, _functionSelector);
-    }
+    // /**
+    //  * @dev Function to revoke permission of an account
+    //  * @notice _account the account to revoke the permission
+    //  * @notice the function selector to revoke permission for
+    //  */
+    // function revokePermision(
+    //     address _account,
+    //     bytes4 _functionSelector
+    // ) external onlyOwner validAccount(_account) {
+    //     _revokePermission(_account, _functionSelector);
+    // }
 
-    /**
-     * @dev Function to batch revoke permission of an account
-     * @notice _account the account to revoke the permission
-     * @notice the function selectors to revoke permission for
-     */
-    function batchRevokePermission(
-        address _account,
-        bytes4[] calldata _functionSelector
-    ) external onlyOwner validAccount(_account) {
-        for (uint256 i = 0; i < _functionSelector.length; i++) {
-            _revokePermission(_account, _functionSelector[i]);
-        }
-    }
+    // /**
+    //  * @dev Function to batch revoke permission of an account
+    //  * @notice _account the account to revoke the permission
+    //  * @notice the function selectors to revoke permission for
+    //  */
+    // function batchRevokePermission(
+    //     address _account,
+    //     bytes4[] calldata _functionSelector
+    // ) external onlyOwner validAccount(_account) {
+    //     for (uint256 i = 0; i < _functionSelector.length; i++) {
+    //         _revokePermission(_account, _functionSelector[i]);
+    //     }
+    // }
 
     /**
      * @dev Internal function to grant permission to an account
@@ -138,30 +138,30 @@ contract PermissionManager is Ownable {
         );
     }
 
-    /**
-     * @dev Internal function to revoke permission of an account
-     * @notice _account the account to revoke the permission
-     * @notice the function selector to revoke permission for
-     */
-    function _revokePermission(
-        address _account,
-        bytes4 _functionSelector
-    ) internal {
-        Permission storage permission = _permissions[_account][
-            _functionSelector
-        ];
+    // /**
+    //  * @dev Internal function to revoke permission of an account
+    //  * @notice _account the account to revoke the permission
+    //  * @notice the function selector to revoke permission for
+    //  */
+    // function _revokePermission(
+    //     address _account,
+    //     bytes4 _functionSelector
+    // ) internal {
+    //     Permission storage permission = _permissions[_account][
+    //         _functionSelector
+    //     ];
 
-        if (permission.isActive) {
-            permission.isActive = false;
-        }
+    //     if (permission.isActive) {
+    //         permission.isActive = false;
+    //     }
 
-        emit PermissionRevoked(
-            _account,
-            _functionSelector,
-            false,
-            uint40(block.timestamp)
-        );
-    }
+    //     emit PermissionRevoked(
+    //         _account,
+    //         _functionSelector,
+    //         false,
+    //         uint40(block.timestamp)
+    //     );
+    // }
 
     function hasPermissions(
         address _account,
@@ -179,10 +179,5 @@ contract PermissionManager is Ownable {
         transferOwnership(_newowner);
     }
 
-    // Getters
-    function getAccountFunctionSelectors(
-        address _account
-    ) public view returns (bytes4[] memory) {
-        return _accountFunctionSelectors[_account];
-    }
+   
 }
