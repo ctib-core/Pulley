@@ -36,8 +36,8 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     uint256 public constant TRADER_PROFIT_SHARE = 99; // 99%
 
     // ============ Thresholds ============
-    uint256 public profitThreshold = 1000 * 1e18; // Threshold for profit recording
-    uint256 public minimumGasBalance = 0.01 ether; // Minimum gas for operations
+    uint256 public profitThreshold = 1; // Threshold for profit recording
+    uint256 public minimumGasBalance =1; // Minimum gas for operations
 
     /// @notice Modifier for permissioned actions
     modifier isAuthorized(bytes4 _functionSelector) {

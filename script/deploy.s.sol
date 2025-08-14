@@ -16,11 +16,12 @@ contract DeployScript is Script {
     PermissionManager permissionManager;
     CrossChainController controller;
     address[] allowedAssetsList;
-    address baseEndpoint = 0x6EDCE65403992e310A62460808c4b910D972f10f; //eth endpoint
-    address owner = address(0x11);
+    address baseEndpoint = 0x1a44076050125825900e736c501f859c50fE728c; //eth
+   
     TradingPool tradingPool;
     address[] supportedAssets;
     Gateway gateway;
+    uint256 public  threshold = 1;
 
     address public deployer;
 
@@ -49,7 +50,6 @@ contract DeployScript is Script {
         deploy();
         grantPermission(deployer);
         setConfig();
-        grantPermission(deployer);
         logAddress();
 
         vm.stopBroadcast();
@@ -57,12 +57,13 @@ contract DeployScript is Script {
 
     function deploy() internal {
         permissionManager = new PermissionManager();
-        controller = new CrossChainController(baseEndpoint, deployer);
-        pToken = new PulleyToken(
+         pToken = new PulleyToken(
             "PulleyToken",
             "PK",
             address(permissionManager)
         );
+        controller = new CrossChainController(baseEndpoint, deployer);
+       
         pulley = new PulleyTokenEngine(
             address(pToken),
             allowedAssetsList,
@@ -86,7 +87,7 @@ contract DeployScript is Script {
         pToken.setCrossChainContract(address(controller));
         pToken.setPulleyTokenEngine(address(pulley));
         tradingPool.setCrossChainController(address(controller));
-        controller.setProfitThreshold(1);
+      //  controller.setProfitThreshold( threshold);
         controller.setContractAddress(
             STRATEGY,
             LIMIT_ORDER,
@@ -105,7 +106,7 @@ contract DeployScript is Script {
     }
 
     function grantPermission(address _account) internal {
-        bytes4[] memory permissions = new bytes4[](11);
+        bytes4[] memory permissions = new bytes4[](12);
 
         permissions[0] = controller.emergencyWithdraw.selector;
         permissions[1] = controller.deployToNestVault.selector;
