@@ -88,17 +88,18 @@ contract DeployScript is Script {
         pToken.setPulleyTokenEngine(address(pulley));
         tradingPool.setCrossChainController(address(controller));
       //  controller.setProfitThreshold( threshold);
-        controller.setContractAddress(
-            STRATEGY,
-            LIMIT_ORDER,
-            address(permissionManager),
-            address(pToken),
-            address(tradingPool)
-        );
+        // controller.setContractAddress(
+        //     STRATEGY,
+        //     LIMIT_ORDER,
+        //     address(permissionManager),
+        //     address(pToken),
+        //     address(tradingPool)
+        // );
         setAsset();
     }
 
     function setAsset() internal {
+      
         pulley.setAssetAllowed(address(pToken), true);
         pulley.setAssetAllowed(address(usdc), true);
         pulley.setAssetAllowed(address(coreToken), true);

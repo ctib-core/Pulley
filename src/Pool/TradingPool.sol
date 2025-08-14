@@ -423,9 +423,6 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
         // In a real implementation, this would call the cross-chain controller
         // to get the latest profit/loss data from remote chains
         if (crossChainController != address(0)) {
-            // Call cross-chain controller to check profit/loss status
-            // This is a placeholder - in reality you'd call a specific function
-            // that returns the latest profit/loss data
         }
     }
 }
