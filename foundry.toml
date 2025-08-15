@@ -4,6 +4,7 @@ out = "out"
 libs = ["lib"]
 
 
+
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@layerzerolabs/oapp-evm/=lib/devtools/packages/oapp-evm/",
@@ -15,7 +16,7 @@ remappings = [
 # CoreDao Configuration
 
 [rpc_endpoints]
-localchain = "${LOCALCHAIN_URL}"
+localhost = "${LOCALCHAIN_URL}"
 basechain = "${BASE_URL}"
 base-sepolia = "${BASE_URL}"
 ethereum = "${ETHERUM_URL}"

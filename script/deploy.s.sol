@@ -40,7 +40,7 @@ contract DeployScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.addr(deployerPrivateKey);
 
-        vm.createSelectFork(vm.rpcUrl("corechainlocal"));
+        vm.createSelectFork(vm.rpcUrl("localhost"));
         vm.startBroadcast(deployerPrivateKey);
 
         console.log("Deploying contracts to Core network...");
@@ -61,7 +61,8 @@ contract DeployScript is Script {
         pulley = new PulleyTokenEngine(address(pToken), allowedAssetsList, address(permissionManager));
         tradingPool = new TradingPool(address(pulley), supportedAssets, address(permissionManager));
         controller = new CrossChainController(
-            baseEndpoint, deployer, address( permissionManager), address(pulley), address(tradingPool)
+            baseEndpoint, deployer
+            // , address( permissionManager), address(pulley), address(tradingPool)
         );
         gateway = new Gateway(
             address(pToken), address(pulley), address(tradingPool), address(controller), address(permissionManager)

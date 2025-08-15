@@ -13,7 +13,7 @@ import {IPermissionManager} from "../Permission/interface/IPermissionManager.sol
 
 /// @title CrossChainController - Manages cross-chain fund allocation and operations
 /// @notice Controls fund distribution: 10% insurance, 45% Nest vault, 45% limit orders
-contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
+contract CrossChainController is OAppOptionsType3, ReentrancyGuard, OApp {
     using PermissionModifiers for *;
     using SafeERC20 for IERC20;
 
@@ -38,6 +38,23 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     // ============ Thresholds ============
     uint256 public profitThreshold = 1; // Threshold for profit recording
     uint256 public minimumGasBalance = 1; // Minimum gas for operations
+
+        /// @notice Initialize with Endpoint V2 and owner address
+    /// @param _endpoint The local chain's LayerZero Endpoint V2 address
+    /// @param bb    The address permitted to configure this OApp
+    constructor(address _endpoint, address bb
+   //  , address permission, address pulleyStablecoin, address tradingPool
+   )
+      Ownable(msg.sender)
+      OApp(_endpoint, bb)
+    {
+        // Initialize with minimum gas balance
+        minimumGasBalance = 1;
+
+      //   IPERMISSION = permission;
+      //   PULLEY_STABL/ECOIN_ADDRESS = pulleyStablecoin;
+      //   TRADING_POOL_ADDRESS = tradingPool;
+    }
 
     /// @notice Modifier for permissioned actions
     modifier isAuthorized(bytes4 _functionSelector) {
@@ -135,20 +152,7 @@ contract CrossChainController is OApp, OAppOptionsType3, ReentrancyGuard {
     error CrossChainController__InsufficientGasBalance();
     error CrossChainController__TransferFailed();
 
-    /// @notice Initialize with Endpoint V2 and owner address
-    /// @param _endpoint The local chain's LayerZero Endpoint V2 address
-    /// @param _owner    The address permitted to configure this OApp
-    constructor(address _endpoint, address _owner, address permission, address pulleyStablecoin, address tradingPool)
-        OApp(_endpoint, _owner)
-        Ownable(_owner)
-    {
-        // Initialize with minimum gas balance
-        minimumGasBalance = 1;
 
-        IPERMISSION = permission;
-        PULLEY_STABLECOIN_ADDRESS = pulleyStablecoin;
-        TRADING_POOL_ADDRESS = tradingPool;
-    }
 
     // ============ Fund Management Functions ============
 
