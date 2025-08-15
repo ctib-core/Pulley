@@ -41,7 +41,7 @@ contract DeployScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.addr(deployerPrivateKey);
 
-        vm.createSelectFork(vm.rpcUrl("coredao"));
+        vm.createSelectFork(vm.rpcUrl("corechainlocal"));
         vm.startBroadcast(deployerPrivateKey);
 
         console.log("Deploying contracts to Core network...");

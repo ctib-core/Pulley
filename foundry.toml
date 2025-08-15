@@ -24,6 +24,7 @@ hedera = "${HEDERA_URL}"
 avalanche = "${AVALANCHE_URL}"
 anvillocal = "${ANVIL_URL}"
 coredao = "${CORE_URL}"
+corechainlocal = "${CORE_LOCALS}"
 
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
