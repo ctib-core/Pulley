@@ -154,7 +154,7 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
      * @notice Record a trading loss and potentially trigger Pulley token coverage
      * @param lossAmountUSD Loss amount in USD
      */
-     //@audit call from cross-chain contract - FIXED: Added proper access control
+    //@audit call from cross-chain contract - FIXED: Added proper access control
     function recordTradingLoss(uint256 lossAmountUSD)
         external
         onlyPermitted(this.recordTradingLoss.selector)
@@ -194,7 +194,7 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
      * @notice Record trading profits
      * @param profitAmountUSD Profit amount in USD
      */
-     //@audit call from cross-chain - FIXED: Added proper access control
+    //@audit call from cross-chain - FIXED: Added proper access control
     function recordTradingProfit(uint256 profitAmountUSD)
         external
         onlyPermitted(this.recordTradingProfit.selector)
@@ -421,7 +421,6 @@ contract TradingPool is ReentrancyGuard, ITradingPool {
     function _checkPendingProfitLoss() internal {
         // In a real implementation, this would call the cross-chain controller
         // to get the latest profit/loss data from remote chains
-        if (crossChainController != address(0)) {
-        }
+        if (crossChainController != address(0)) {}
     }
 }

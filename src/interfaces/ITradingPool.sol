@@ -15,5 +15,8 @@ interface ITradingPool {
     function getAssetBalance(address asset) external view returns (uint256);
     function getSupportedAssets() external view returns (address[] memory);
     function getPendingProfitDistribution() external view returns (uint256);
-    function getLossCoverageMetrics() external view returns (uint256 totalLosses, uint256 coveredByPulley, uint256 currentProfitShare);
+    function getLossCoverageMetrics()
+        external
+        view
+        returns (uint256 totalLosses, uint256 coveredByPulley, uint256 currentProfitShare);
 }

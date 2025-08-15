@@ -13,18 +13,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract PermissionManager is Ownable {
     // Events
-    event PermissionGranted(
-        address _account,
-        bytes4 _functionSelector,
-        bool _isActive,
-        uint40 _time
-    );
-    event PermissionRevoked(
-        address _account,
-        bytes4 _functionSelector,
-        bool _isActive,
-        uint40 _timestamp
-    );
+    event PermissionGranted(address _account, bytes4 _functionSelector, bool _isActive, uint40 _time);
+    event PermissionRevoked(address _account, bytes4 _functionSelector, bool _isActive, uint40 _timestamp);
+
     struct Permission {
         address account;
         bytes4 functionSelector;
@@ -43,10 +34,7 @@ contract PermissionManager is Ownable {
 
     // Modifiers
     modifier validAccount(address _account) {
-        require(
-            _account != address(0),
-            "PermissionManager: Cannot be zero address"
-        );
+        require(_account != address(0), "PermissionManager: Cannot be zero address");
         _;
     }
 
@@ -60,10 +48,7 @@ contract PermissionManager is Ownable {
      * @notice _account the account to receive the permission
      * @notice the function selector to grant permission for
      */
-    function grantPermission(
-        address _account,
-        bytes4 _functionSelector
-    ) external onlyOwner validAccount(_account) {
+    function grantPermission(address _account, bytes4 _functionSelector) external onlyOwner validAccount(_account) {
         _grantPermission(_account, _functionSelector);
     }
 
@@ -72,10 +57,11 @@ contract PermissionManager is Ownable {
      * @notice _account the account to receive the permission
      * @notice the function selectors to grant permission for
      */
-    function grantBatchPermission(
-        address _account,
-        bytes4[] calldata _functionSelector
-    ) external onlyOwner validAccount(_account) {
+    function grantBatchPermission(address _account, bytes4[] calldata _functionSelector)
+        external
+        onlyOwner
+        validAccount(_account)
+    {
         for (uint256 i = 0; i < _functionSelector.length; i++) {
             _grantPermission(_account, _functionSelector[i]);
         }
@@ -112,13 +98,8 @@ contract PermissionManager is Ownable {
      * @notice _account the account to receive the permission
      * @notice the function selector to grant permission for
      */
-    function _grantPermission(
-        address _account,
-        bytes4 functionSelector
-    ) internal {
-        Permission storage permission = _permissions[_account][
-            functionSelector
-        ];
+    function _grantPermission(address _account, bytes4 functionSelector) internal {
+        Permission storage permission = _permissions[_account][functionSelector];
 
         if (!permission.isActive) {
             _accountFunctionSelectors[_account].push(functionSelector);
@@ -130,12 +111,7 @@ contract PermissionManager is Ownable {
         permission.isActive = true;
         permission.grantedAt = uint40(block.timestamp);
 
-        emit PermissionGranted(
-            _account,
-            functionSelector,
-            true,
-            uint40(block.timestamp)
-        );
+        emit PermissionGranted(_account, functionSelector, true, uint40(block.timestamp));
     }
 
     // /**
@@ -163,21 +139,12 @@ contract PermissionManager is Ownable {
     //     );
     // }
 
-    function hasPermissions(
-        address _account,
-        bytes4 _functionSelector
-    ) public view returns (bool) {
-        Permission storage permission = _permissions[_account][
-            _functionSelector
-        ];
+    function hasPermissions(address _account, bytes4 _functionSelector) public view returns (bool) {
+        Permission storage permission = _permissions[_account][_functionSelector];
         return permission.isActive;
     }
 
-    function setNewPermissionManager(
-        address _newowner
-    ) public onlyOwner validAccount(_newowner) {
+    function setNewPermissionManager(address _newowner) public onlyOwner validAccount(_newowner) {
         transferOwnership(_newowner);
     }
-
-   
 }

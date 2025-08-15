@@ -16,7 +16,7 @@ import {PulleyTokenEngine} from "../../src/Token/pulleyEngine.sol";
 // Mock ERC20 token for testing
 contract MockERC20 is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 1000000 * 10**18);
+        _mint(msg.sender, 1000000 * 10 ** 18);
     }
 
     function mint(address to, uint256 amount) public {
@@ -29,7 +29,7 @@ contract MockPermissionManager {
     function hasPermissions(address, bytes4) external pure returns (bool) {
         return true;
     }
-    
+
     function owner() external view returns (address) {
         return msg.sender;
     }
@@ -37,14 +37,7 @@ contract MockPermissionManager {
 
 // Mock LayerZero Endpoint for testing
 contract MockEndpoint {
-    function send(
-        uint32,
-        bytes calldata,
-        bytes calldata,
-        address,
-        address,
-        bytes calldata
-    ) external payable {}
+    function send(uint32, bytes calldata, bytes calldata, address, address, bytes calldata) external payable {}
 }
 
 // Handler for CrossChain invariant testing
@@ -75,17 +68,17 @@ contract CrossChainHandler is Test {
     function receiveFundsFromTradingPool() public {
         // Simulate funds being available in the controller
         uint256 amount = bound(uint256(keccak256(abi.encode(block.timestamp, block.difficulty))), 1000, 1e20);
-        
+
         // Mint tokens to the controller to simulate received funds
         mockUSDC.mint(address(crossChainController), amount);
-        
+
         crossChainController.receiveFundsFromTradingPool();
-        
+
         // Update ghost variables based on allocation percentages
-        uint256 insuranceAmount = (amount * 10) / 100;  // 10%
-        uint256 nestVaultAmount = (amount * 45) / 100;  // 45%
+        uint256 insuranceAmount = (amount * 10) / 100; // 10%
+        uint256 nestVaultAmount = (amount * 45) / 100; // 45%
         uint256 limitOrderAmount = amount - insuranceAmount - nestVaultAmount; // Remaining
-        
+
         ghost_totalInsuranceAllocated += insuranceAmount;
         ghost_totalNestVaultAllocated += nestVaultAmount;
         ghost_totalLimitOrderAllocated += limitOrderAmount;
@@ -118,26 +111,15 @@ contract CrossChainInvariantTest is StdInvariant, Test {
         mockEndpoint = new MockEndpoint();
 
         pulleyToken = new PulleyToken("Pulley Token", "PULL", address(permissionManager));
-        
+
         address[] memory allowedAssets = new address[](1);
         allowedAssets[0] = address(mockUSDC);
-        
-        pulleyTokenEngine = new PulleyTokenEngine(
-            address(pulleyToken),
-            allowedAssets,
-            address(permissionManager)
-        );
 
-        tradingPool = new TradingPool(
-            address(pulleyTokenEngine),
-            allowedAssets,
-            address(permissionManager)
-        );
+        pulleyTokenEngine = new PulleyTokenEngine(address(pulleyToken), allowedAssets, address(permissionManager));
 
-        crossChainController = new CrossChainController(
-            address(mockEndpoint),
-            address(this)
-        );
+        tradingPool = new TradingPool(address(pulleyTokenEngine), allowedAssets, address(permissionManager));
+
+        crossChainController = new CrossChainController(address(mockEndpoint), address(this));
 
         // Setup contract addresses
         crossChainController.setContractAddress(
@@ -153,12 +135,7 @@ contract CrossChainInvariantTest is StdInvariant, Test {
 
         pulleyToken.setPulleyTokenEngine(address(pulleyTokenEngine));
 
-        handler = new CrossChainHandler(
-            crossChainController,
-            tradingPool,
-            pulleyTokenEngine,
-            mockUSDC
-        );
+        handler = new CrossChainHandler(crossChainController, tradingPool, pulleyTokenEngine, mockUSDC);
 
         targetContract(address(handler));
 
@@ -166,22 +143,19 @@ contract CrossChainInvariantTest is StdInvariant, Test {
         selectors[0] = CrossChainHandler.receiveFundsFromTradingPool.selector;
         selectors[1] = CrossChainHandler.setSupportedAsset.selector;
         selectors[2] = CrossChainHandler.setProfitThreshold.selector;
-        
-        targetSelector(FuzzSelector({
-            addr: address(handler),
-            selectors: selectors
-        }));
+
+        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
     }
 
     /// @dev Invariant: Fund allocation percentages should always be correct
     function invariant_FundAllocationPercentages() public view {
         address asset = address(mockUSDC);
-        
+
         uint256 insuranceAllocation = crossChainController.insuranceAllocations(asset);
         uint256 nestVaultAllocation = crossChainController.nestVaultAllocations(asset);
         uint256 limitOrderAllocation = crossChainController.limitOrderAllocations(asset);
         uint256 totalInvested = crossChainController.totalInvested(asset);
-        
+
         if (totalInvested > 0) {
             // Check that allocations sum to total invested
             assertEq(
@@ -189,20 +163,20 @@ contract CrossChainInvariantTest is StdInvariant, Test {
                 totalInvested,
                 "Allocations should sum to total invested"
             );
-            
+
             // Check percentage bounds (allowing for rounding errors)
             uint256 insurancePercentage = (insuranceAllocation * 100) / totalInvested;
             uint256 nestVaultPercentage = (nestVaultAllocation * 100) / totalInvested;
             uint256 limitOrderPercentage = (limitOrderAllocation * 100) / totalInvested;
-            
+
             // Insurance should be ~10% (allowing 1% tolerance for rounding)
             assertGe(insurancePercentage, 9, "Insurance allocation should be at least 9%");
             assertLe(insurancePercentage, 11, "Insurance allocation should be at most 11%");
-            
+
             // Nest vault should be ~45% (allowing 1% tolerance)
             assertGe(nestVaultPercentage, 44, "Nest vault allocation should be at least 44%");
             assertLe(nestVaultPercentage, 46, "Nest vault allocation should be at most 46%");
-            
+
             // Limit order should be ~45% (allowing 1% tolerance)
             assertGe(limitOrderPercentage, 44, "Limit order allocation should be at least 44%");
             assertLe(limitOrderPercentage, 46, "Limit order allocation should be at most 46%");
@@ -212,24 +186,24 @@ contract CrossChainInvariantTest is StdInvariant, Test {
     /// @dev Invariant: Ghost variables should match contract state
     function invariant_GhostVariableConsistency() public view {
         address asset = address(mockUSDC);
-        
+
         uint256 contractInsuranceAllocation = crossChainController.insuranceAllocations(asset);
         uint256 contractNestVaultAllocation = crossChainController.nestVaultAllocations(asset);
         uint256 contractLimitOrderAllocation = crossChainController.limitOrderAllocations(asset);
-        
+
         // Ghost variables should match contract state
         assertEq(
             handler.ghost_totalInsuranceAllocated(),
             contractInsuranceAllocation,
             "Ghost insurance allocation should match contract state"
         );
-        
+
         assertEq(
             handler.ghost_totalNestVaultAllocated(),
             contractNestVaultAllocation,
             "Ghost nest vault allocation should match contract state"
         );
-        
+
         assertEq(
             handler.ghost_totalLimitOrderAllocated(),
             contractLimitOrderAllocation,
@@ -240,23 +214,18 @@ contract CrossChainInvariantTest is StdInvariant, Test {
     /// @dev Invariant: Total invested should equal sum of all allocations
     function invariant_TotalInvestedConsistency() public view {
         address asset = address(mockUSDC);
-        
+
         uint256 totalInvested = crossChainController.totalInvested(asset);
-        uint256 sumOfAllocations = crossChainController.insuranceAllocations(asset) +
-                                  crossChainController.nestVaultAllocations(asset) +
-                                  crossChainController.limitOrderAllocations(asset);
-        
-        assertEq(
-            totalInvested,
-            sumOfAllocations,
-            "Total invested should equal sum of allocations"
-        );
+        uint256 sumOfAllocations = crossChainController.insuranceAllocations(asset)
+            + crossChainController.nestVaultAllocations(asset) + crossChainController.limitOrderAllocations(asset);
+
+        assertEq(totalInvested, sumOfAllocations, "Total invested should equal sum of allocations");
     }
 
     /// @dev Invariant: Profit threshold should be within reasonable bounds
     function invariant_ProfitThresholdBounds() public view {
         uint256 profitThreshold = crossChainController.profitThreshold();
-        
+
         assertGe(profitThreshold, 100, "Profit threshold should be at least 100");
         assertLe(profitThreshold, 1e24, "Profit threshold should be reasonable");
     }
@@ -264,7 +233,7 @@ contract CrossChainInvariantTest is StdInvariant, Test {
     /// @dev Invariant: Asset list should only contain supported assets
     function invariant_AssetListConsistency() public view {
         address[] memory supportedAssets = crossChainController.getSupportedAssets();
-        
+
         for (uint256 i = 0; i < supportedAssets.length; i++) {
             assertTrue(
                 crossChainController.supportedAssets(supportedAssets[i]),
@@ -285,11 +254,10 @@ contract CrossChainInvariantTest is StdInvariant, Test {
         assertEq(crossChainController.INSURANCE_PERCENTAGE(), 10, "Insurance percentage should be 10");
         assertEq(crossChainController.NEST_VAULT_PERCENTAGE(), 45, "Nest vault percentage should be 45");
         assertEq(crossChainController.LIMIT_ORDER_PERCENTAGE(), 45, "Limit order percentage should be 45");
-        
-        uint256 totalPercentage = crossChainController.INSURANCE_PERCENTAGE() +
-                                 crossChainController.NEST_VAULT_PERCENTAGE() +
-                                 crossChainController.LIMIT_ORDER_PERCENTAGE();
-        
+
+        uint256 totalPercentage = crossChainController.INSURANCE_PERCENTAGE()
+            + crossChainController.NEST_VAULT_PERCENTAGE() + crossChainController.LIMIT_ORDER_PERCENTAGE();
+
         assertEq(totalPercentage, 100, "Total allocation percentages should equal 100");
     }
 
@@ -297,19 +265,19 @@ contract CrossChainInvariantTest is StdInvariant, Test {
     function invariant_AllocationBounds() public view {
         address asset = address(mockUSDC);
         uint256 totalInvested = crossChainController.totalInvested(asset);
-        
+
         assertLe(
             crossChainController.insuranceAllocations(asset),
             totalInvested,
             "Insurance allocation should not exceed total invested"
         );
-        
+
         assertLe(
             crossChainController.nestVaultAllocations(asset),
             totalInvested,
             "Nest vault allocation should not exceed total invested"
         );
-        
+
         assertLe(
             crossChainController.limitOrderAllocations(asset),
             totalInvested,
@@ -320,7 +288,7 @@ contract CrossChainInvariantTest is StdInvariant, Test {
     /// @dev Invariant: Request nonce should only increase
     function invariant_RequestNonceMonotonic() public view {
         uint256 currentNonce = crossChainController.requestNonce();
-        
+
         // Store previous nonce in a way that persists across calls
         // This is a simplified check - in practice you'd need more sophisticated tracking
         assertGe(currentNonce, 0, "Request nonce should be non-negative");
@@ -333,13 +301,11 @@ contract CrossChainInvariantTest is StdInvariant, Test {
         address permissionContract = crossChainController.IPERMISSION();
         address pulleyStablecoinAddress = crossChainController.PULLEY_STABLECOIN_ADDRESS();
         address tradingPoolAddress = crossChainController.TRADING_POOL_ADDRESS();
-        
+
         // At least some addresses should be set for the system to function
         assertTrue(
-            strategyContract != address(0) || 
-            permissionContract != address(0) ||
-            pulleyStablecoinAddress != address(0) ||
-            tradingPoolAddress != address(0),
+            strategyContract != address(0) || permissionContract != address(0) || pulleyStablecoinAddress != address(0)
+                || tradingPoolAddress != address(0),
             "At least some contract addresses should be set"
         );
     }

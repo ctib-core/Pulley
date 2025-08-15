@@ -52,11 +52,10 @@ contract Gateway is ReentrancyGuard {
         address _crossChainController,
         address _permissionManager
     ) {
-        if (_pulleyToken == address(0) || 
-            _pulleyTokenEngine == address(0) || 
-            _tradingPool == address(0) || 
-            _crossChainController == address(0) ||
-            _permissionManager == address(0)) {
+        if (
+            _pulleyToken == address(0) || _pulleyTokenEngine == address(0) || _tradingPool == address(0)
+                || _crossChainController == address(0) || _permissionManager == address(0)
+        ) {
             revert Gateway__ZeroAddress();
         }
 
@@ -73,11 +72,7 @@ contract Gateway is ReentrancyGuard {
      * @param asset Asset to deposit for Pulley tokens
      * @param amount Amount of asset to deposit
      */
-    function buyPulleyTokens(address asset, uint256 amount)
-        external
-        moreThanZero(amount)
-        nonReentrant
-    {
+    function buyPulleyTokens(address asset, uint256 amount) external moreThanZero(amount) nonReentrant {
         // Transfer asset from user to this contract
         IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -96,11 +91,7 @@ contract Gateway is ReentrancyGuard {
      * @param asset Asset to deposit
      * @param amount Amount to deposit
      */
-    function depositToTradingPool(address asset, uint256 amount)
-        external
-        moreThanZero(amount)
-        nonReentrant
-    {
+    function depositToTradingPool(address asset, uint256 amount) external moreThanZero(amount) nonReentrant {
         // Transfer asset from user to this contract
         IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -123,11 +114,7 @@ contract Gateway is ReentrancyGuard {
      * @param tokenAmount Amount for buying Pulley tokens
      * @param tradingAmount Amount for trading pool deposit
      */
-    function buyTokensAndDeposit(
-        address asset,
-        uint256 tokenAmount,
-        uint256 tradingAmount
-    ) external nonReentrant {
+    function buyTokensAndDeposit(address asset, uint256 tokenAmount, uint256 tradingAmount) external nonReentrant {
         uint256 totalAmount = tokenAmount + tradingAmount;
         if (totalAmount == 0) revert Gateway__ZeroAmount();
 
@@ -156,18 +143,16 @@ contract Gateway is ReentrancyGuard {
      */
     function _checkAndTransferToCrossChain(address asset) internal {
         uint256 poolBalance = tradingPool.getAssetBalance(asset);
-        
+
         // Transfer to cross-chain when pool reaches a certain threshold
         // This threshold should be configurable in a real implementation
         uint256 transferThreshold = 1000 * 1e18; // 1000 tokens threshold
-        
+
         if (poolBalance >= transferThreshold) {
             // Call cross-chain controller to receive funds from trading pool
             // This will trigger the fund allocation: 10% insurance, 45% Nest vault, 45% limit orders
-            (bool success,) = crossChainController.call(
-                abi.encodeWithSignature("receiveFundsFromTradingPool()")
-            );
-            
+            (bool success,) = crossChainController.call(abi.encodeWithSignature("receiveFundsFromTradingPool()"));
+
             if (success) {
                 emit FundsTransferredToCrossChain(asset, poolBalance);
             }
@@ -179,11 +164,7 @@ contract Gateway is ReentrancyGuard {
      * @param asset Asset to withdraw
      * @param amount Amount to withdraw
      */
-    function withdrawFromTradingPool(address asset, uint256 amount)
-        external
-        moreThanZero(amount)
-        nonReentrant
-    {
+    function withdrawFromTradingPool(address asset, uint256 amount) external moreThanZero(amount) nonReentrant {
         // This will internally check for profit/loss before withdrawal
         tradingPool.withdrawAsset(asset, amount, msg.sender);
     }
@@ -217,10 +198,10 @@ contract Gateway is ReentrancyGuard {
      * @return pulleyTokensOwned Pulley tokens owned
      * @return depositTime Deposit timestamp
      */
-    function getPulleyTokenInfo(address user) 
-        external 
-        view 
-        returns (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime) 
+    function getPulleyTokenInfo(address user)
+        external
+        view
+        returns (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime)
     {
         return pulleyTokenEngine.getProvider(user);
     }
@@ -231,10 +212,10 @@ contract Gateway is ReentrancyGuard {
      * @return totalLosses Total losses
      * @return totalProfits Total profits
      */
-    function getTradingPoolMetrics() 
-        external 
-        view 
-        returns (uint256 totalValue, uint256 totalLosses, uint256 totalProfits) 
+    function getTradingPoolMetrics()
+        external
+        view
+        returns (uint256 totalValue, uint256 totalLosses, uint256 totalProfits)
     {
         return tradingPool.getPoolMetrics();
     }

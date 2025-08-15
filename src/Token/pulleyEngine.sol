@@ -133,10 +133,7 @@ contract PulleyTokenEngine is ReentrancyGuard, IPulleyTokenEngine {
         emit LiquidityProvided(msg.sender, asset, amount, pulleyTokensToMint);
     }
 
-    function insuranceBackingMinter(address asset, uint256 amount) 
-        public 
-        moreThanZero(amount)
-    {
+    function insuranceBackingMinter(address asset, uint256 amount) public moreThanZero(amount) {
         if (!allowedAssets[asset]) {
             revert PulleyTokenEngine__NotAllowedAsset();
         }
@@ -212,8 +209,7 @@ contract PulleyTokenEngine is ReentrancyGuard, IPulleyTokenEngine {
         emit LiquidityWithdrawn(msg.sender, asset, assetToReturn, pulleyTokensToRedeem);
     }
 
-
-//@audit only cross token - FIXED: Added proper access control for cross-chain calls
+    //@audit only cross token - FIXED: Added proper access control for cross-chain calls
     /**
      * @notice Cover trading pool losses using pulley token reserves
      * @dev Only callable by authorized contracts (TradingPool or CrossChainController)
@@ -260,10 +256,10 @@ contract PulleyTokenEngine is ReentrancyGuard, IPulleyTokenEngine {
     {
         // Add profit to backing value
         totalBackingValue += profitAmount;
-        
+
         // Update reserve fund in the token contract
         i_pulleyToken.updateReserveFund(profitAmount, true);
-        
+
         emit ProfitsDistributedToPulleyHolders(profitAmount, totalBackingValue);
     }
 
@@ -301,7 +297,11 @@ contract PulleyTokenEngine is ReentrancyGuard, IPulleyTokenEngine {
      * @return pulleyTokensOwned Amount of pulley tokens owned
      * @return depositTime Time of deposit
      */
-    function getProvider(address provider) external view returns (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime) {
+    function getProvider(address provider)
+        external
+        view
+        returns (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime)
+    {
         Provider memory p = providers[provider];
         return (p.assetsDeposited, p.pulleyTokensOwned, p.depositTime);
     }
@@ -335,6 +335,4 @@ contract PulleyTokenEngine is ReentrancyGuard, IPulleyTokenEngine {
     function getAssetReserve(address asset) external view returns (uint256) {
         return assetReserves[asset];
     }
-
- 
 }

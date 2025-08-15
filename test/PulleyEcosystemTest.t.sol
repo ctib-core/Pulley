@@ -16,7 +16,7 @@ import {CrossChainController} from "../src/cross_chain/cross_chain_controller.so
 // Mock ERC20 token for testing
 contract MockERC20 is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 1000000 * 10**18);
+        _mint(msg.sender, 1000000 * 10 ** 18);
     }
 
     function mint(address to, uint256 amount) public {
@@ -59,21 +59,13 @@ contract PulleyEcosystemTest is Test {
 
         // Deploy core contracts
         pulleyToken = new PulleyToken("Pulley Token", "PULL", address(permissionManager));
-        
+
         address[] memory allowedAssets = new address[](1);
         allowedAssets[0] = address(mockUSDC);
-        
-        pulleyTokenEngine = new PulleyTokenEngine(
-            address(pulleyToken),
-            allowedAssets,
-            address(permissionManager)
-        );
 
-        tradingPool = new TradingPool(
-            address(pulleyTokenEngine),
-            allowedAssets,
-            address(permissionManager)
-        );
+        pulleyTokenEngine = new PulleyTokenEngine(address(pulleyToken), allowedAssets, address(permissionManager));
+
+        tradingPool = new TradingPool(address(pulleyTokenEngine), allowedAssets, address(permissionManager));
 
         // Set up permissions
         _setupPermissions();
@@ -91,8 +83,8 @@ contract PulleyEcosystemTest is Test {
         );
 
         // Give users some tokens
-        mockUSDC.mint(user1, 10000 * 10**18);
-        mockUSDC.mint(user2, 10000 * 10**18);
+        mockUSDC.mint(user1, 10000 * 10 ** 18);
+        mockUSDC.mint(user2, 10000 * 10 ** 18);
     }
 
     function _setupPermissions() internal {
@@ -102,7 +94,7 @@ contract PulleyEcosystemTest is Test {
         permissionManager.grantPermission(address(pulleyTokenEngine), pulleyTokenEngine.withdrawLiquidity.selector);
         permissionManager.grantPermission(address(pulleyTokenEngine), pulleyTokenEngine.coverTradingLoss.selector);
         permissionManager.grantPermission(address(pulleyTokenEngine), pulleyTokenEngine.distributeProfits.selector);
-        
+
         permissionManager.grantPermission(address(tradingPool), tradingPool.depositAsset.selector);
         permissionManager.grantPermission(address(tradingPool), tradingPool.withdrawAsset.selector);
         permissionManager.grantPermission(address(tradingPool), tradingPool.recordTradingLoss.selector);
@@ -110,17 +102,17 @@ contract PulleyEcosystemTest is Test {
     }
 
     function testUserFlowBuyTokens() public {
-        uint256 depositAmount = 1000 * 10**18;
+        uint256 depositAmount = 1000 * 10 ** 18;
 
         vm.startPrank(user1);
-        
+
         // Approve and buy Pulley tokens
         mockUSDC.approve(address(gateway), depositAmount);
         gateway.buyPulleyTokens(address(mockUSDC), depositAmount);
 
         // Check that user received Pulley tokens
         assertEq(pulleyToken.balanceOf(user1), depositAmount);
-        
+
         // Check that PulleyTokenEngine has the backing assets
         assertEq(pulleyTokenEngine.getAssetReserve(address(mockUSDC)), depositAmount);
 
@@ -128,29 +120,29 @@ contract PulleyEcosystemTest is Test {
     }
 
     function testUserFlowDepositToTrading() public {
-        uint256 depositAmount = 1000 * 10**18;
+        uint256 depositAmount = 1000 * 10 ** 18;
 
         vm.startPrank(user1);
-        
+
         // Approve and deposit to trading pool
         mockUSDC.approve(address(gateway), depositAmount);
         gateway.depositToTradingPool(address(mockUSDC), depositAmount);
 
         // Check that trading pool has the assets
         assertEq(tradingPool.getAssetBalance(address(mockUSDC)), depositAmount);
-        
+
         vm.stopPrank();
     }
 
     function testCombinedUserFlow() public {
-        uint256 tokenAmount = 500 * 10**18;
-        uint256 tradingAmount = 1500 * 10**18;
+        uint256 tokenAmount = 500 * 10 ** 18;
+        uint256 tradingAmount = 1500 * 10 ** 18;
 
         vm.startPrank(user1);
-        
+
         // Approve total amount
         mockUSDC.approve(address(gateway), tokenAmount + tradingAmount);
-        
+
         // Buy tokens and deposit to trading in one transaction
         gateway.buyTokensAndDeposit(address(mockUSDC), tokenAmount, tradingAmount);
 
@@ -168,8 +160,8 @@ contract PulleyEcosystemTest is Test {
 
         // Check metrics
         (uint256 totalValue, uint256 totalLosses, uint256 totalProfits) = gateway.getTradingPoolMetrics();
-        
-        assertEq(totalValue, 1500 * 10**18); // Trading amount from previous test
+
+        assertEq(totalValue, 1500 * 10 ** 18); // Trading amount from previous test
         assertEq(totalLosses, 0);
         assertEq(totalProfits, 0);
     }
@@ -177,14 +169,10 @@ contract PulleyEcosystemTest is Test {
     function testPulleyTokenInfo() public {
         testUserFlowBuyTokens();
 
-        (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime) = 
-            gateway.getPulleyTokenInfo(user1);
+        (uint256 assetsDeposited, uint256 pulleyTokensOwned, uint256 depositTime) = gateway.getPulleyTokenInfo(user1);
 
-        assertEq(assetsDeposited, 1000 * 10**18);
-        assertEq(pulleyTokensOwned, 1000 * 10**18);
+        assertEq(assetsDeposited, 1000 * 10 ** 18);
+        assertEq(pulleyTokensOwned, 1000 * 10 ** 18);
         assertGt(depositTime, 0);
     }
 }
-
-
-

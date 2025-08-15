@@ -24,12 +24,9 @@ contract PulleyToken is ERC20, ERC20Permit, ReentrancyGuard, IPulleyToken {
     // Reserve fund that actually holds assets for coverage
     uint256 public reserveFund;
 
-
     //insurance funds
 
     uint256 public insuranceFunds;
-  
-
 
     // Events
     event PulleyTokenEngineUpdated(address indexed oldEngine, address indexed newEngine);
@@ -139,7 +136,6 @@ contract PulleyToken is ERC20, ERC20Permit, ReentrancyGuard, IPulleyToken {
         emit ReserveFundUpdated(reserveFund);
     }
 
-   
     /**
      * @notice Get total supply of PulleyTokens
      * @return Total supply of tokens
@@ -179,7 +175,7 @@ contract PulleyToken is ERC20, ERC20Permit, ReentrancyGuard, IPulleyToken {
 
         // Reduce insurance funds
         insuranceFunds -= amount;
-        
+
         // Reduce reserve fund
         if (reserveFund >= amount) {
             reserveFund -= amount;
@@ -218,12 +214,10 @@ contract PulleyToken is ERC20, ERC20Permit, ReentrancyGuard, IPulleyToken {
      * @notice Set cross-chain contract address
      * @param _crossChainContract Address of cross-chain contract
      */
-    function setCrossChainContract(address _crossChainContract) 
-        external 
-        onlyPermitted(this.setCrossChainContract.selector) 
+    function setCrossChainContract(address _crossChainContract)
+        external
+        onlyPermitted(this.setCrossChainContract.selector)
     {
         CROSS_CHAIN_CONTRACT = _crossChainContract;
     }
-
-    
 }

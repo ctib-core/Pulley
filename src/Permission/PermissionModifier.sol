@@ -15,25 +15,21 @@ library PermissionModifiers {
      * @param account The account to check
      * @param functionSelector The function selector to check
      */
-    function hasPermission(
-        address permissionManager,
-        address account,
-        bytes4 functionSelector
-    ) internal view returns (bool) {
+    function hasPermission(address permissionManager, address account, bytes4 functionSelector)
+        internal
+        view
+        returns (bool)
+    {
         return IPermissionManager(permissionManager).hasPermissions(account, functionSelector);
     }
-    
+
     /**
      * @dev Require that an account has permission for a specific function selector
      * @param permissionManager The permission manager contract address
      * @param account The account to check
      * @param functionSelector The function selector to check
      */
-    function requirePermission(
-        address permissionManager,
-        address account,
-        bytes4 functionSelector
-    ) internal view {
+    function requirePermission(address permissionManager, address account, bytes4 functionSelector) internal view {
         require(
             IPermissionManager(permissionManager).hasPermissions(account, functionSelector),
             "PermissionModifiers: Account does not have required permission"
