@@ -33,9 +33,9 @@ contract DeployScript is Script {
     address public LIMIT_ORDER = 0xf0830060f836B8d54bF02049E5905F619487989e;
 
     //token address
-    address public usdc = 0xf0830060f836B8d54bF02049E5905F619487989e;
-    address public coreToken = 0xf0830060f836B8d54bF02049E5905F619487989e;
-    address public ethereum = 0xf0830060f836B8d54bF02049E5905F619487989e;
+    address public usdc = 0xa4151B2B3e269645181dCcF2D426cE75fcbDeca9;
+    address public coreToken = 0xb3a8f0f0da9ffc65318aa39e55079796093029ad;
+    address public ethereum = 0xeAB3aC417c4d6dF6b143346a46fEe1B847B50296;
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
