@@ -60,6 +60,7 @@ contract DeployScript is Script {
 
         pulley = new PulleyTokenEngine(address(pToken), allowedAssetsList, address(permissionManager));
         tradingPool = new TradingPool(address(pulley), supportedAssets, address(permissionManager));
+        
         controller = new CrossChainController(
             baseEndpoint, deployer, address( permissionManager), address(pulley), address(tradingPool)
         );
